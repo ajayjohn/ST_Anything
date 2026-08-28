@@ -21,8 +21,10 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+#ifdef ARDUINO_ARCH_AVR
 #include <avr/pgmspace.h>
-#ifndef ARDUINO_ARCH_AVR
+#endif
+#ifndef __AVR__
 #include <strings.h>
 #endif
 
@@ -135,9 +137,14 @@ bool WiFiMDNSResponder::parseRequest()
       return false;
     }
 
-    // read packet
-    uint8_t request[packetLength];
-    udpSocket.read(request, packetLength);
+    // read up to the min expect request length
+    uint8_t request[minimumExpectedRequestLength];
+    udpSocket.read(request, minimumExpectedRequestLength);
+
+    // discard the rest
+    while(udpSocket.available()) {
+      udpSocket.read();
+    }
 
     // parse request
     uint8_t requestNameLength   = request[HEADER_SIZE];
